@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Známkovač</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3350;
+      --text: #e8eaf6;
+      --text2: #8892b0;
+      --accent: #6c63ff;
+      --accent2: #a78bfa;
+      --radius: 12px;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px 40px;
+    }
+
+    h1 {
+      font-size: 1.9rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 4px;
+      background: linear-gradient(135deg, #a78bfa, #6c63ff, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--text2);
+      font-size: 0.85rem;
+      margin-bottom: 28px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      margin-bottom: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text2);
+      margin-bottom: 14px;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 18px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    @media(max-width: 860px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ── SCALE BAR ── */
+    #scale-bar-wrap {
+      position: relative;
+      height: 72px;
+      border-radius: 10px;
+      overflow: visible;
+      margin-bottom: 24px;
+      user-select: none;
+    }
+
+    #scale-bar {
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .seg {
+      height: 100%;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.9);
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+      pointer-events: none;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .handle {
+      position: absolute;
+      top: -8px;
+      width: 16px;
+      height: 88px;
+      background: var(--bg);
+      border: 2px solid var(--accent2);
+      border-radius: 8px;
+      cursor: ew-resize;
+      transform: translateX(-50%);
+      z-index: 10;
+      transition: background 0.15s, border-color 0.15s;
+      box-shadow: 0 0 10px rgba(167, 139, 250, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .handle::after {
+      content: '⋮';
+      color: var(--accent2);
+      font-size: 1rem;
+    }
+
+    .handle:hover,
+    .handle.dragging {
+      background: var(--accent2);
+      border-color: white;
+      box-shadow: 0 0 16px rgba(167, 139, 250, 0.7);
+    }
+
+    .handle-label {
+      position: absolute;
+      top: -26px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      border-radius: 5px;
+      padding: 3px 6px;
+      white-space: nowrap;
+      pointer-events: none;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      transition: opacity 0.2s, top 0.2s;
+    }
+
+    /* Show labels when hovering over the scale bar area */
+    #scale-bar-wrap:hover .handle-label {
+      opacity: 1;
+      top: -30px;
+    }
+
+    /* ── GRADE ROWS ── */
+    .grade-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .grade-row {
+      display: grid;
+      grid-template-columns: 18px 28px 110px 62px 62px 1fr auto;
+      gap: 6px;
+      align-items: center;
+      border-radius: 8px;
+      padding: 2px 0;
+      transition: background 0.15s, opacity 0.15s;
+    }
+
+    .grade-row.drag-over {
+      background: rgba(167, 139, 250, 0.12);
+      outline: 2px solid var(--accent2);
+    }
+
+    .grade-row.dragging-row {
+      opacity: 0.35;
+    }
+
+    .grip-handle {
+      color: var(--border);
+      font-size: 1.1rem;
+      line-height: 1;
+      text-align: center;
+      cursor: grab;
+      user-select: none;
+      transition: color 0.15s;
+    }
+
+    .grip-handle:hover {
+      color: var(--accent2);
+    }
+
+    .pct-input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.85rem;
+      padding: 5px 6px;
+      width: 62px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      transition: border-color 0.15s;
+    }
+
+    .pct-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .pct-input:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    .max-pts-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .max-pts-label {
+      font-size: 0.82rem;
+      color: var(--text2);
+      white-space: nowrap;
+    }
+
+    .max-pts-input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 7px 14px;
+      width: 130px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      transition: border-color 0.15s;
+    }
+
+    .max-pts-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .decimal-select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.85rem;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .decimal-select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .pts-range {
+      font-size: 0.82rem;
+      color: var(--accent2);
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      display: grid;
+      grid-template-columns: 1fr 12px 1fr 14px;
+      align-items: center;
+      text-align: right;
+      width: 100%;
+    }
+
+    .pts-val {
+      text-align: right;
+    }
+
+    .pts-dash {
+      text-align: center;
+      color: var(--text2);
+      opacity: 0.5;
+    }
+
+    .pts-unit {
+      text-align: left;
+      padding-left: 4px;
+    }
+
+    .grade-color-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 2px solid var(--border);
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .grade-name-input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--text);
+      font-size: 0.88rem;
+      padding: 5px 9px;
+      width: 100%;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+
+    .grade-name-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .grade-range {
+      font-size: 0.82rem;
+      color: var(--text2);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .btn-icon {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      border-radius: 7px;
+      width: 30px;
+      height: 30px;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+
+    .btn-icon:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* ── LOCK CONTROLS ── */
+    .lock-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      color: var(--text2);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .toggle input {
+      display: none;
+    }
+
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      transition: background 0.2s;
+    }
+
+    .toggle input:checked+.toggle-track {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .toggle-thumb {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 14px;
+      height: 14px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    .toggle input:checked~.toggle-thumb {
+      transform: translateX(16px);
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 0.82rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn:hover {
+      background: var(--surface);
+      border-color: var(--accent2);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #6c63ff, #a78bfa);
+      border-color: transparent;
+      color: white;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.88;
+      background: linear-gradient(135deg, #6c63ff, #a78bfa);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    /* ── HISTOGRAM INPUT ── */
+    .grade-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .grade-btn-row {
+      display: grid;
+      grid-template-columns: 1fr 80px 36px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .hist-btn {
+      padding: 10px 14px;
+      border-radius: 9px;
+      border: 2px solid transparent;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      color: rgba(255, 255, 255, 0.95);
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+      transition: filter 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .hist-btn:hover {
+      filter: brightness(1.15);
+      transform: translateX(2px);
+    }
+
+    .hist-btn:active {
+      transform: scale(0.97);
+    }
+
+    .hist-count-badge {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 0.78rem;
+      min-width: 28px;
+      text-align: center;
+    }
+
+    .count-input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.88rem;
+      padding: 7px 8px;
+      width: 100%;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .count-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* ── STAT BADGES ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stat-badge {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .stat-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    /* ── CANVAS ── */
+    #hist-canvas {
+      width: 100%;
+      border-radius: 10px;
+      background: var(--surface2);
+      display: block;
+    }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .section-icon {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .section-info {
+      flex: 1;
+    }
+
+    .section-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    .section-desc {
+      font-size: 0.75rem;
+      color: var(--text2);
+      line-height: 1.4;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn-group-label {
+      font-size: 0.7rem;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      margin-right: 2px;
+    }
+
+    .btn-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--border);
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+
+    .btn-danger {
+      border-color: #ef444440;
+      color: #ef4444;
+    }
+
+    .btn-danger:hover {
+      background: #ef444415;
+      border-color: #ef4444;
+    }
+
+    input[type="color"] {
+      -webkit-appearance: none;
+      appearance: none;
+      border: none;
+      background: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Známkovač</h1>
+  <p class="subtitle">Nástroj pro nastavení hodnotící škály a vizualizaci výsledků</p>
+
+  <div class="main-grid">
+
+    <!-- LEFT COLUMN -->
+    <div>
+
+      <!-- SCALE EDITOR -->
+      <div class="card">
+        <div class="section-header">
+          <span class="section-icon">🎚️</span>
+          <div class="section-info">
+            <div class="section-title">Nastavení škály</div>
+            <div class="section-desc">Tahej táhla pro úpravu hranic • Pořadí řádků lze přesunut tažením ≡</div>
+          </div>
+        </div>
+
+        <div id="scale-bar-wrap">
+          <div id="scale-bar"></div>
+        </div>
+
+        <div class="max-pts-row">
+          <label class="max-pts-label" for="max-pts-input">📐 Max bodů:</label>
+          <input id="max-pts-input" class="max-pts-input" type="number" min="1" max="99999" placeholder="nepovinné"
+            oninput="changeMaxPts(this.value)">
+          <label class="max-pts-label" for="decimal-select" style="margin-left:14px;">Desetinná místa:</label>
+          <select id="decimal-select" class="decimal-select" onchange="changeDecimalPlaces(this.value)">
+            <option value="0" selected>0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+          </select>
+        </div>
+
+        <div class="lock-row">
+          <label class="toggle-label">
+            <span class="toggle">
+              <input type="checkbox" id="lock-all-toggle">
+              <span class="toggle-track"></span>
+              <span class="toggle-thumb"></span>
+            </span>
+            🔒 Uzamknout posouvání hranic (všechny poměry zachovány)
+          </label>
+        </div>
+
+        <div
+          style="display:grid;grid-template-columns:18px 28px 110px 62px 62px 1fr auto;gap:6px;align-items:center;margin-bottom:4px;padding:0 2px;">
+          <span></span><span></span>
+          <span style="font-size:0.7rem;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;">Název</span>
+          <span
+            style="font-size:0.7rem;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;text-align:center;">Od
+            %</span>
+          <span
+            style="font-size:0.7rem;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;text-align:center;">Do
+            %</span>
+          <div style="display:grid;grid-template-columns:1fr 12px 1fr 14px;">
+            <span
+              style="grid-column:1/5; font-size:0.7rem;color:var(--accent2);text-transform:uppercase;letter-spacing:.05em;text-align:right;padding-right:4px;">Body</span>
+          </div>
+          <span></span>
+        </div>
+        <div class="grade-rows" id="grade-rows"></div>
+
+        <div class="btn-row" style="gap:6px;flex-wrap:wrap;margin-top:14px;">
+          <span class="btn-group-label">Stupeň:</span>
+          <button class="btn" onclick="addGrade()">➕ Přidat</button>
+          <button class="btn" onclick="resetDefault()">🔄 Výchozí 1–5</button>
+          <span class="btn-divider"></span>
+          <span class="btn-group-label">Škála CSV:</span>
+          <label class="btn" style="cursor:pointer;">📂 Načíst<input type="file" accept=".csv" style="display:none"
+              onchange="loadCSV(event)"></label>
+          <button class="btn" onclick="exportCSV()">💾 Uložit</button>
+        </div>
+      </div>
+
+      <!-- HISTOGRAM CHART -->
+      <div class="card">
+        <div class="section-header">
+          <span class="section-icon">📊</span>
+          <div class="section-info">
+            <div class="section-title">Histogram výsledků</div>
+            <div class="section-desc">Křivka normálního rozdělení • medián • průměr • modus</div>
+          </div>
+        </div>
+        <div class="stats-row" id="stats-row">
+          <div class="stat-badge">
+            <div class="stat-label">👥 Počet</div>
+            <div class="stat-value" id="st-total">0</div>
+          </div>
+          <div class="stat-badge">
+            <div class="stat-label">📐 Průměr</div>
+            <div class="stat-value" id="st-mean">–</div>
+          </div>
+          <div class="stat-badge">
+            <div class="stat-label">〒 Medián</div>
+            <div class="stat-value" id="st-median">–</div>
+          </div>
+          <div class="stat-badge">
+            <div class="stat-label">🏆 Modus</div>
+            <div class="stat-value" id="st-mode">–</div>
+          </div>
+        </div>
+        <canvas id="hist-canvas"></canvas>
+        <div class="btn-row" style="margin-top:14px;flex-wrap:wrap;gap:6px;">
+          <button class="btn btn-primary" onclick="downloadChart()">⬇️ Stáhnout graf (PNG)</button>
+          <span class="btn-divider"></span>
+          <span class="btn-group-label">Výsledky:</span>
+          <button class="btn" onclick="saveSettings()">💾 Uložit do CSV</button>
+          <label class="btn" style="cursor:pointer;">📂 Načíst z CSV<input type="file" accept=".csv"
+              style="display:none" onchange="loadSettings(event)"></label>
+          <span class="btn-divider"></span>
+          <button class="btn btn-danger" onclick="resetCounts()">🗑️ Vynulovat</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div>
+      <div class="card" style="position:sticky;top:16px;">
+        <div class="section-header">
+          <span class="section-icon">🎯</span>
+          <div class="section-info">
+            <div class="section-title">Zadání studentů</div>
+            <div class="section-desc">Klikni = +1 student • Zadej číslo přímo • − = odebrat</div>
+          </div>
+        </div>
+        <div class="grade-btns" id="grade-btns"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ─────────────────────────────────────────────────────────────
+    //  STATE
+    // ─────────────────────────────────────────────────────────────
+    let grades = [];   // [{name, color, min}]  sorted by min DESC (best first)
+    let counts = [];   // parallel array of student counts
+    let maxPoints = 0; // 0 = not set
+    let decimalPlaces = 0; // 0-3
+
+    const DEFAULT_GRADES = [
+      { name: '1', color: '#22c55e', min: 90 },
+      { name: '2', color: '#84cc16', min: 75 },
+      { name: '3', color: '#eab308', min: 60 },
+      { name: '4', color: '#f97316', min: 45 },
+      { name: '5', color: '#ef4444', min: 0 },
+    ];
+
+    // ─────────────────────────────────────────────────────────────
+    //  INIT
+    // ─────────────────────────────────────────────────────────────
+    function init() {
+      grades = DEFAULT_GRADES.map(g => ({ ...g }));
+      counts = grades.map(() => 0);
+      render();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  RENDER
+    // ─────────────────────────────────────────────────────────────
+    function render() {
+      renderBar();
+      renderRows();
+      renderHistBtns();
+      renderChart();
+    }
+
+    // ─── Scale bar ───
+    function renderBar() {
+      const wrap = document.getElementById('scale-bar-wrap');
+      const bar = document.getElementById('scale-bar');
+
+      [...wrap.querySelectorAll('.handle')].forEach(h => h.remove());
+      bar.innerHTML = '';
+
+      const n = grades.length;
+      // Width of segment i = from grades[i].min up to grades[i-1].min (or 100 for i=0)
+      const widths = grades.map((g, i) => {
+        const myMax = i === 0 ? 100 : grades[i - 1].min;
+        return myMax - g.min;
+      });
+
+      widths.forEach((w, i) => {
+        const seg = document.createElement('div');
+        seg.className = 'seg';
+        seg.style.width = w + '%';
+        seg.style.background = grades[i].color;
+
+        // Show native tooltip with % on hover
+        seg.title = `${grades[i].name}: ${w}%`;
+
+        // Show text label inside segment if wide enough
+        const label = w < 5 ? '' : grades[i].name;
+        seg.textContent = label;
+        bar.appendChild(seg);
+      });
+
+      // Handle i sits at the right edge of segment i (= boundary between seg i and seg i+1)
+      // It controls grades[i].min
+      for (let i = 0; i < n - 1; i++) {
+        let cum = 0;
+        for (let j = 0; j <= i; j++) cum += widths[j];
+
+        const handle = document.createElement('div');
+        handle.className = 'handle';
+        handle.id = `handle-${i}`;
+        handle.style.left = cum + '%';
+
+        // Percentage bubble label above handle
+        const lbl = document.createElement('span');
+        lbl.className = 'handle-label';
+        lbl.id = `hlabel-${i}`;
+        lbl.textContent = grades[i].min + '%';
+        handle.appendChild(lbl);
+
+        wrap.appendChild(handle);
+        makeDraggable(handle, i);
+      }
+    }
+
+    // State for drag-to-reorder rows
+    let dragSrcIdx = null;
+
+    // ─── Grade rows ───
+    function renderRows() {
+      const container = document.getElementById('grade-rows');
+      container.innerHTML = '';
+      grades.forEach((g, i) => {
+        const maxPct = i === 0 ? 100 : grades[i - 1].min - 1;
+        const minPct = g.min;
+        const isLast = i === grades.length - 1;
+        const ptsText = calcPtsText(minPct, maxPct);
+
+        const row = document.createElement('div');
+        row.className = 'grade-row';
+        row.draggable = true;
+
+        // HTML5 Drag & Drop handlers for reordering
+        row.addEventListener('dragstart', (e) => {
+          dragSrcIdx = i;
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', i);
+          setTimeout(() => row.classList.add('dragging-row'), 0);
+        });
+
+        row.addEventListener('dragover', (e) => {
+          e.preventDefault(); // Necessary to allow dropping
+          e.dataTransfer.dropEffect = 'move';
+          return false;
+        });
+
+        row.addEventListener('dragenter', (e) => {
+          e.preventDefault();
+          if (i !== dragSrcIdx) row.classList.add('drag-over');
+        });
+
+        row.addEventListener('dragleave', () => {
+          row.classList.remove('drag-over');
+        });
+
+        row.addEventListener('drop', (e) => {
+          e.stopPropagation();
+          row.classList.remove('drag-over');
+          if (dragSrcIdx === null || dragSrcIdx === i) return false;
+
+          const fromI = dragSrcIdx;
+          const toI = i;
+
+          // Swap name, color, and counts, BUT keep min intact to not break the scale
+          const tempName = grades[fromI].name;
+          const tempColor = grades[fromI].color;
+          const tempCount = counts[fromI];
+
+          grades[fromI].name = grades[toI].name;
+          grades[fromI].color = grades[toI].color;
+          counts[fromI] = counts[toI];
+
+          grades[toI].name = tempName;
+          grades[toI].color = tempColor;
+          counts[toI] = tempCount;
+
+          render();
+          return false;
+        });
+
+        row.addEventListener('dragend', () => {
+          row.classList.remove('dragging-row');
+          document.querySelectorAll('.grade-row').forEach(el => el.classList.remove('drag-over'));
+          dragSrcIdx = null;
+        });
+
+        row.innerHTML = `
+      <div class="grip-handle" title="Tažením změňte pořadí">⠿</div>
+      <input type="color" class="grade-color-swatch" value="${g.color}" title="Barva" onchange="changeColor(${i}, this.value)">
+      <input class="grade-name-input" value="${g.name}" maxlength="20" oninput="changeName(${i}, this.value)">
+      <input id="od-pct-${i}" class="pct-input" type="number" min="0" max="100" value="${minPct}"
+        ${isLast ? 'disabled title="Nejhorší stupeň vždy začíná od 0%"' : `oninput="changeMinPct(${i}, this.value)" onblur="commitMinPct(${i}, this.value)"`}>
+      <input id="do-pct-${i}" class="pct-input" type="number" min="0" max="100" value="${maxPct}" disabled title="Automaticky vypočteno">
+      <span id="pts-range-${i}" class="pts-range">${ptsText}</span>
+      <button class="btn-icon" title="Smazat" onclick="removeGrade(${i})" ${grades.length <= 2 ? 'disabled' : ''}>✕</button>
+    `;
+        container.appendChild(row);
+      });
+    }
+
+    // Helper: compute points range HTML for a grade (returns HTML string with grid spans)
+    function calcPtsText(minPct, maxPct) {
+      if (maxPoints <= 0) return '';
+      const dp = decimalPlaces;
+      const ptFrom = (minPct / 100 * maxPoints);
+      const ptTo = (maxPct / 100 * maxPoints);
+      // round: from = ceil at dp, to = floor at dp
+      const factor = Math.pow(10, dp);
+      const fromR = (Math.ceil(ptFrom * factor) / factor).toFixed(dp);
+      const toR = (Math.floor(ptTo * factor) / factor).toFixed(dp);
+
+      if (parseFloat(fromR) > parseFloat(toR)) {
+        return `<span class="pts-val">${fromR}</span><span class="pts-dash"></span><span class="pts-val"></span><span class="pts-unit">b</span>`;
+      }
+      return `<span class="pts-val">${fromR}</span><span class="pts-dash">–</span><span class="pts-val">${toR}</span><span class="pts-unit">b</span>`;
+    }
+
+    // Only update pts-range spans (no DOM rebuild, keeps focus)
+    function renderPtsRanges() {
+      grades.forEach((g, i) => {
+        const maxPct = i === 0 ? 100 : grades[i - 1].min - 1;
+        const el = document.getElementById(`pts-range-${i}`);
+        if (el) el.innerHTML = calcPtsText(g.min, maxPct); // now innerHTML because it contains spans
+      });
+    }
+
+    // ─── Histogram buttons ───
+    function renderHistBtns() {
+      const container = document.getElementById('grade-btns');
+      container.innerHTML = '';
+      grades.forEach((g, i) => {
+        const maxPct = i === 0 ? 100 : grades[i - 1].min - 1;
+        const row = document.createElement('div');
+        row.className = 'grade-btn-row';
+
+        const btn = document.createElement('button');
+        btn.className = 'hist-btn';
+        btn.style.background = `linear-gradient(135deg, ${g.color}cc, ${g.color})`;
+        btn.innerHTML = `<span>${g.name} <span style="font-weight:400;font-size:0.78rem;opacity:0.85">(${g.min}–${maxPct}%)</span></span><span class="hist-count-badge" id="badge-${i}">${counts[i]}</span>`;
+        btn.onclick = () => { counts[i]++; syncInput(i); updateBadge(i); renderChart(); };
+
+        const inp = document.createElement('input');
+        inp.type = 'number';
+        inp.className = 'count-input';
+        inp.min = 0;
+        inp.value = counts[i];
+        inp.id = `cnt-${i}`;
+        inp.oninput = () => { counts[i] = Math.max(0, parseInt(inp.value) || 0); updateBadge(i); renderChart(); };
+
+        const del = document.createElement('button');
+        del.className = 'btn-icon';
+        del.title = 'Odebrat jednoho';
+        del.textContent = '−';
+        del.onclick = () => { if (counts[i] > 0) { counts[i]--; syncInput(i); updateBadge(i); renderChart(); } };
+
+        row.append(btn, inp, del);
+        container.appendChild(row);
+      });
+    }
+
+    function syncInput(i) {
+      const el = document.getElementById(`cnt-${i}`);
+      if (el) el.value = counts[i];
+    }
+
+    function updateBadge(i) {
+      const el = document.getElementById(`badge-${i}`);
+      if (el) el.textContent = counts[i];
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  DRAG HANDLES
+    // ─────────────────────────────────────────────────────────────
+    function makeDraggable(handle, idx) {
+      // Handle idx sits between segment idx (left) and segment idx+1 (right).
+      // It controls grades[idx].min – the lower bound of grade idx.
+      // Moving handle RIGHT in the bar means grades[idx].min INCREASES (segment idx gets narrower,
+      // segment idx+1 gets wider), because the bar goes from best (left) to worst (right).
+
+      handle.addEventListener('mousedown', e => {
+        e.preventDefault();
+        const startX = e.clientX;
+        const startMin = grades[idx].min;   // value we are changing
+        handle.classList.add('dragging');
+
+        const barRect = document.getElementById('scale-bar').getBoundingClientRect();
+        const lockAll = document.getElementById('lock-all-toggle').checked;
+        const startMins = grades.map(g => g.min);
+
+        const onMove = ev => {
+          const dx = ev.clientX - startX;
+          const dpct = (dx / barRect.width) * 100;
+
+          // Moving handle LEFT (-dx) → dpct negative → grades[idx].min decreases → handle moves right
+          // Moving handle RIGHT (+dx) → dpct positive → grades[idx].min increases → handle moves left
+          // Physical handle pos = (100 - grades[idx].min)% → to follow mouse, use -dpct
+          let newMin = Math.round(startMin - dpct);
+
+          // Clamp: must stay strictly above grades[idx+1].min and strictly below grades[idx-1].min
+          const upper = idx === 0 ? 99 : startMins[idx - 1] - 1;
+          const lower = idx + 1 <= grades.length - 1 ? startMins[idx + 1] + 1 : 1;
+          newMin = Math.min(upper, Math.max(lower, newMin));
+
+          if (lockAll) {
+            const delta = newMin - startMin;
+            const newMins = startMins.map((m, j) => {
+              if (j === grades.length - 1) return 0; // last always 0
+              return Math.max(1, Math.min(99, m + delta));
+            });
+            // validate no crossing
+            let valid = true;
+            for (let j = 0; j < newMins.length - 1; j++) {
+              if (newMins[j] <= newMins[j + 1]) { valid = false; break; }
+            }
+            if (valid) grades.forEach((g, j) => { g.min = newMins[j]; });
+          } else {
+            grades[idx].min = newMin;
+          }
+
+          renderBar();
+          // Sync od-pct / do-pct inputs
+          grades.forEach((g, j) => {
+            const odEl = document.getElementById(`od-pct-${j}`);
+            if (odEl) odEl.value = g.min;
+            const doEl = document.getElementById(`do-pct-${j}`);
+            if (doEl) doEl.value = j === 0 ? 100 : grades[j - 1].min - 1;
+            // Update handle label bubble
+            if (j < grades.length - 1) {
+              const lbl = document.getElementById(`hlabel-${j}`);
+              if (lbl) lbl.textContent = g.min + '%';
+            }
+          });
+          renderPtsRanges();
+        };
+
+        const onUp = () => {
+          handle.classList.remove('dragging');
+          renderChart();
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        };
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  CHART
+    // ─────────────────────────────────────────────────────────────
+    function renderChart() {
+      const canvas = document.getElementById('hist-canvas');
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+
+      const W = canvas.clientWidth || 600;
+      const H = 280;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      canvas.style.height = H + 'px';
+      ctx.scale(dpr, dpr);
+
+      const pad = { top: 24, right: 20, bottom: 48, left: 46 };
+      const chartW = W - pad.left - pad.right;
+      const chartH = H - pad.top - pad.bottom;
+
+      ctx.clearRect(0, 0, W, H);
+
+      // ── Background glow ──
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+      bgGrad.addColorStop(0, 'rgba(108,99,255,0.04)');
+      bgGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(pad.left, pad.top, chartW, chartH);
+
+      const n = grades.length;
+      const total = counts.reduce((a, b) => a + b, 0);
+
+      // ── Stats ──
+      let mean = 0, median = 0, mode = 0;
+      if (total > 0) {
+        const vals = [];
+        counts.forEach((c, i) => { for (let k = 0; k < c; k++) vals.push(i); });
+        vals.sort((a, b) => a - b);
+        mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+        median = vals.length % 2 === 0
+          ? (vals[vals.length / 2 - 1] + vals[vals.length / 2]) / 2
+          : vals[Math.floor(vals.length / 2)];
+        const freq = {};
+        vals.forEach(v => freq[v] = (freq[v] || 0) + 1);
+        mode = parseInt(Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0]);
+        document.getElementById('st-total').textContent = total;
+        document.getElementById('st-mean').textContent = (mean + 1).toFixed(2);
+        document.getElementById('st-median').textContent = grades[Math.round(median)].name;
+        document.getElementById('st-mode').textContent = grades[mode].name;
+      } else {
+        ['st-total', 'st-mean', 'st-median', 'st-mode'].forEach(id => {
+          document.getElementById(id).textContent = id === 'st-total' ? '0' : '–';
+        });
+      }
+
+      // ── Grid lines ──
+      const maxCount = Math.max(...counts, 1);
+      const gridLines = 5;
+      ctx.font = '11px Inter, system-ui';
+      for (let g = 0; g <= gridLines; g++) {
+        const y = pad.top + chartH - (g / gridLines) * chartH;
+        ctx.strokeStyle = g === 0 ? '#3a3f5c' : '#252848';
+        ctx.lineWidth = g === 0 ? 1.5 : 1;
+        ctx.setLineDash(g === 0 ? [] : [4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(pad.left + chartW, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#55607a';
+        ctx.textAlign = 'right';
+        const tickVal = Math.round((g / gridLines) * maxCount);
+        ctx.fillText(tickVal, pad.left - 7, y + 4);
+      }
+
+      // ── Bars ──
+      const gap = chartW / n;
+      const barW = gap * 0.68;
+      counts.forEach((c, i) => {
+        const bh = (c / maxCount) * chartH;
+        const x = pad.left + i * gap + gap * 0.16;
+        const y = pad.top + chartH - bh;
+        const baseY = pad.top + chartH;
+        const col = grades[i].color;
+
+        if (bh < 1) {
+          // empty bar placeholder
+          ctx.fillStyle = col + '18';
+          ctx.fillRect(x, baseY - 2, barW, 2);
+          ctx.fillStyle = '#55607a';
+          ctx.font = '600 12px Inter, system-ui';
+          ctx.textAlign = 'center';
+          ctx.fillText(grades[i].name, x + barW / 2, baseY + 18);
+          return;
+        }
+
+        // Main gradient fill
+        const grad = ctx.createLinearGradient(x, y, x + barW, baseY);
+        grad.addColorStop(0, col + 'ff');
+        grad.addColorStop(0.6, col + 'cc');
+        grad.addColorStop(1, col + '55');
+        ctx.shadowColor = col + '70';
+        ctx.shadowBlur = 14;
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.roundRect(x, y, barW, bh, [6, 6, 0, 0]);
+        ctx.fill();
+
+        // Inner highlight on top
+        const hiGrad = ctx.createLinearGradient(x, y, x + barW, y);
+        hiGrad.addColorStop(0, 'rgba(255,255,255,0.18)');
+        hiGrad.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = hiGrad;
+        ctx.fillRect(x, y, barW / 2, Math.min(bh, 24));
+
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
+
+        // Count above bar
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '600 12px Inter, system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText(c, x + barW / 2, Math.max(y - 6, pad.top + 14));
+
+        // % label inside bar if tall enough
+        if (bh >= 30 && total > 0) {
+          ctx.fillStyle = 'rgba(255,255,255,0.65)';
+          ctx.font = '10px Inter, system-ui';
+          ctx.fillText(Math.round(c / total * 100) + '%', x + barW / 2, y + 18);
+        }
+
+        // Grade name below
+        ctx.fillStyle = '#c8ccdf';
+        ctx.font = '600 13px Inter, system-ui';
+        ctx.fillText(grades[i].name, x + barW / 2, baseY + 18);
+
+        // Small % range below name
+        const maxPct = i === 0 ? 100 : grades[i - 1].min - 1;
+        ctx.fillStyle = '#55607a';
+        ctx.font = '9px Inter, system-ui';
+        ctx.fillText(`${grades[i].min}–${maxPct}%`, x + barW / 2, baseY + 32);
+      });
+
+      // ── Normal distribution curve ──
+      if (total >= 2) {
+        const variance = counts.reduce((acc, c, i) => acc + c * (i - mean) ** 2, 0) / total;
+        const stddev = Math.sqrt(variance) || 0.5;
+        const normalPDF = x => Math.exp(-0.5 * ((x - mean) / stddev) ** 2) / (stddev * Math.sqrt(2 * Math.PI));
+        const peakPDF = normalPDF(mean);
+
+        // Gradient stroke for curve
+        const curveGrad = ctx.createLinearGradient(pad.left, 0, pad.left + chartW, 0);
+        curveGrad.addColorStop(0, '#6c63ff');
+        curveGrad.addColorStop(0.5, '#a78bfa');
+        curveGrad.addColorStop(1, '#38bdf8');
+
+        ctx.save();
+        ctx.shadowColor = '#a78bfa66';
+        ctx.shadowBlur = 12;
+        ctx.strokeStyle = curveGrad;
+        ctx.lineWidth = 3;
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        const steps = 300;
+        for (let px = 0; px <= steps; px++) {
+          const xi = (px / steps) * (n - 1);
+          const pdf = normalPDF(xi);
+          const cx = pad.left + (xi / (n - 1)) * chartW;
+          const py = pad.top + chartH - (pdf / peakPDF) * (maxCount / maxCount) * chartH;
+          px === 0 ? ctx.moveTo(cx, py) : ctx.lineTo(cx, py);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        // ── Median indicator ──
+        const mx = pad.left + (median / (n - 1)) * chartW;
+        ctx.save();
+        ctx.setLineDash([5, 4]);
+        ctx.strokeStyle = '#38bdf8cc';
+        ctx.lineWidth = 1.5;
+        ctx.shadowColor = '#38bdf866';
+        ctx.shadowBlur = 6;
+        ctx.beginPath();
+        ctx.moveTo(mx, pad.top);
+        ctx.lineTo(mx, pad.top + chartH);
+        ctx.stroke();
+        ctx.restore();
+
+        // Median label pill
+        const medText = `Md: ${grades[Math.round(median)].name}`;
+        ctx.font = '600 10px Inter, system-ui';
+        const tw = ctx.measureText(medText).width;
+        ctx.fillStyle = '#38bdf822';
+        ctx.beginPath();
+        ctx.roundRect(mx - tw / 2 - 5, pad.top - 2, tw + 10, 16, 4);
+        ctx.fill();
+        ctx.fillStyle = '#38bdf8';
+        ctx.textAlign = 'center';
+        ctx.fillText(medText, mx, pad.top + 10);
+      }
+
+      // ── Mean indicator (vertical line, subtle) ──
+      if (total >= 2) {
+        const mmx = pad.left + (mean / (n - 1)) * chartW;
+        ctx.save();
+        ctx.setLineDash([2, 5]);
+        ctx.strokeStyle = '#a78bfa66';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(mmx, pad.top);
+        ctx.lineTo(mmx, pad.top + chartH);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  ACTIONS
+    // ─────────────────────────────────────────────────────────────
+    function addGrade() {
+      // Insert a new grade between last two, splitting the last segment
+      const last = grades[grades.length - 1];
+      const secondLast = grades[grades.length - 2];
+      const midMin = Math.round((last.min + secondLast.min) / 2);
+
+      const newGrade = { name: `${grades.length + 1}`, color: '#94a3b8', min: midMin };
+      grades.splice(grades.length - 1, 0, newGrade);
+      counts.splice(counts.length - 1, 0, 0);
+      render();
+    }
+
+    function removeGrade(i) {
+      if (grades.length <= 2) return;
+      grades.splice(i, 1);
+      counts.splice(i, 1);
+      // Ensure last grade always has min=0
+      grades[grades.length - 1].min = 0;
+      // Ensure first grade always has min=100% after it? No — first grade's START is always 100%
+      render();
+    }
+
+    function changeColor(i, val) {
+      grades[i].color = val;
+      render();
+    }
+
+    function changeName(i, val) {
+      grades[i].name = val;
+      renderHistBtns();
+      renderChart();
+    }
+
+    function changeMinPct(i, val) {
+      const num = parseInt(val);
+      if (isNaN(num)) return;
+      const isLast = i === grades.length - 1;
+      if (isLast) return;
+      const upperBound = i === 0 ? 99 : grades[i - 1].min - 1;
+      const lowerBound = i + 1 < grades.length - 1 ? grades[i + 1].min + 1 : 1;
+      const clamped = Math.min(upperBound, Math.max(lowerBound, num));
+      grades[i].min = clamped;
+
+      // Surgical DOM updates – no re-render of rows (keeps focus)
+      // 1. Update "od%" of this grade in case we clamped
+      const odEl = document.getElementById(`od-pct-${i}`);
+      if (odEl && parseInt(odEl.value) !== clamped) odEl.value = clamped;
+      // 2. Update "do%" of the next grade (its max changed)
+      if (i + 1 < grades.length) {
+        const doEl = document.getElementById(`do-pct-${i + 1}`);
+        if (doEl) doEl.value = clamped - 1;
+      }
+      // 3. Refresh bar + chart
+      renderBar();
+      renderPtsRanges();
+      renderChart();
+    }
+
+    function commitMinPct(i, val) {
+      const num = parseInt(val);
+      if (isNaN(num)) { renderRows(); return; }
+      const upperBound = i === 0 ? 99 : grades[i - 1].min - 1;
+      const lowerBound = i + 1 < grades.length - 1 ? grades[i + 1].min + 1 : 1;
+      grades[i].min = Math.min(upperBound, Math.max(lowerBound, num));
+      render();
+    }
+
+    function changeMaxPts(val) {
+      maxPoints = Math.max(0, parseInt(val) || 0);
+      renderPtsRanges();
+      renderHistBtns();
+    }
+
+    function changeDecimalPlaces(val) {
+      decimalPlaces = Math.min(3, Math.max(0, parseInt(val) || 0));
+      renderPtsRanges();
+      renderHistBtns();
+    }
+
+    function resetDefault() {
+      grades = DEFAULT_GRADES.map(g => ({ ...g }));
+      counts = grades.map(() => 0);
+      render();
+    }
+
+    function resetCounts() {
+      counts = grades.map(() => 0);
+      renderHistBtns();
+      renderChart();
+    }
+
+    // Helper for formatting points plain text
+    function getPtsPlain(minPct, maxPct) {
+      if (maxPoints <= 0) return '';
+      const dp = decimalPlaces;
+      const factor = Math.pow(10, dp);
+      const ptFrom = (Math.ceil((minPct / 100 * maxPoints) * factor) / factor).toFixed(dp);
+      const ptTo   = (Math.floor((maxPct / 100 * maxPoints) * factor) / factor).toFixed(dp);
+      return parseFloat(ptFrom) > parseFloat(ptTo) ? `${ptFrom}` : `${ptFrom}-${ptTo}`;
+    }
+
+    // Helper for postfix prompt
+    function getPostfixPrompt(defaultName) {
+      const p = prompt(`Zadej volitelnou příponu pro název souboru (např. 8A_Ma).\nSoubor se uloží jako: ${defaultName}_[přípona].ext\n\nPokud příponu nechceš, nechej pole prázdné.`, "");
+      if (p === null) return null; // Cancelled
+      return p.trim() ? `_${p.trim()}` : '';
+    }
+
+    // ─── CSV ───
+    function exportCSV() {
+      const postfix = getPostfixPrompt('znamkovac_skala');
+      if (postfix === null) return;
+      
+      const header = 'name,color,minPercent,maxPercent,pointsRange';
+      const rows = grades.map((g, i) => {
+        const maxPct = i === 0 ? 100 : grades[i - 1].min - 1;
+        const pts = getPtsPlain(g.min, maxPct);
+        return `"${g.name}",${g.color},${g.min},${maxPct},"${pts}"`;
+      }).join('\n');
+      
+      const blob = new Blob(['\uFEFF' + header + '\n' + rows], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `znamkovac_skala${postfix}.csv`; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function loadCSV(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const lines = e.target.result.trim().split('\n').filter(l => l.trim());
+        const data = [];
+        for (const line of lines) {
+          if (line.startsWith('name')) continue;
+          const parts = line.split(',');
+          if (parts.length < 3) continue;
+          const name = parts[0].trim();
+          const color = parts[1].trim();
+          const min = parseInt(parts[2].trim());
+          if (isNaN(min)) continue;
+          data.push({ name, color, min });
+        }
+        if (data.length < 2) { alert('CSV musí obsahovat alespoň 2 stupně.'); return; }
+        data.sort((a, b) => b.min - a.min);
+        data[data.length - 1].min = 0;
+        grades = data;
+        counts = grades.map(() => 0);
+        render();
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    // ─── Save/Load full settings ───
+    function saveSettings() {
+      const postfix = getPostfixPrompt('znamkovac_vysledky');
+      if (postfix === null) return;
+      
+      const header = `name,color,minPercent,maxPercent,pointsRange,count,maxPoints`;
+      const rows = grades.map((g, i) => {
+        const maxPct = i === 0 ? 100 : grades[i - 1].min - 1;
+        const pts = getPtsPlain(g.min, maxPct);
+        const mp = i === 0 ? (maxPoints > 0 ? maxPoints : '') : '';
+        return `"${g.name}",${g.color},${g.min},${maxPct},"${pts}",${counts[i]},${mp}`;
+      }).join('\n');
+      
+      const blob = new Blob(['\uFEFF' + header + '\n' + rows], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `znamkovac_vysledky${postfix}.csv`; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function loadSettings(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const lines = e.target.result.trim().split('\n').filter(l => l.trim());
+        const data = [];
+        const cnts = [];
+        let restoredMaxPts = 0;
+        for (const line of lines) {
+          if (line.startsWith('name')) continue;
+          const parts = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.replace(/^"|"$/g, '').trim());
+          if (parts.length < 3) continue;
+          
+          const name = parts[0];
+          const color = parts[1];
+          const min = parseInt(parts[2]);
+          
+          let cntIdx = parts.length >= 7 ? 5 : 3;
+          let mpIdx = parts.length >= 7 ? 6 : 4;
+          
+          const cnt = parts.length > cntIdx ? (parseInt(parts[cntIdx]) || 0) : 0;
+          const mp = parts.length > mpIdx ? parseInt(parts[mpIdx]) : NaN;
+          
+          if (isNaN(min)) continue;
+          data.push({ name, color, min });
+          cnts.push(cnt);
+          if (!isNaN(mp) && mp > 0) restoredMaxPts = mp;
+        }
+        if (data.length < 2) { alert('Soubor musí obsahovat alespoň 2 stupně.'); return; }
+        data.sort((a, b) => b.min - a.min);
+        data[data.length - 1].min = 0;
+        grades = data;
+        counts = cnts;
+        if (restoredMaxPts > 0) {
+          maxPoints = restoredMaxPts;
+          const inp = document.getElementById('max-pts-input');
+          if (inp) inp.value = maxPoints;
+        }
+        render();
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+
+    // ─── Download chart ───
+    function downloadChart() {
+      const canvas = document.getElementById('hist-canvas');
+
+      // Create a new canvas with stats text added
+      const outW = canvas.width;
+      const outH = canvas.height + 60 * (window.devicePixelRatio || 1);
+      const tmp = document.createElement('canvas');
+      tmp.width = outW;
+      tmp.height = outH;
+      const ctx = tmp.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+
+      ctx.fillStyle = '#1a1d27';
+      ctx.fillRect(0, 0, outW, outH);
+
+      ctx.drawImage(canvas, 0, 0);
+
+      // Stats footer
+      ctx.fillStyle = '#8892b0';
+      ctx.font = `${12 * dpr}px Inter, system-ui`;
+      ctx.textAlign = 'left';
+      const stats = [
+        `Celkem: ${document.getElementById('st-total').textContent}`,
+        `Průměr: ${document.getElementById('st-mean').textContent}`,
+        `Medián: ${document.getElementById('st-median').textContent}`,
+        `Modus: ${document.getElementById('st-mode').textContent}`,
+      ];
+      stats.forEach((s, i) => ctx.fillText(s, (20 + i * 140) * dpr, canvas.height + 30 * dpr));
+
+      ctx.fillStyle = '#2e3350';
+      ctx.fontSize = 10 * dpr;
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#444966';
+      ctx.fillText('Známkovač', outW - 16 * dpr, canvas.height + 48 * dpr);
+
+      const url = tmp.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url; 
+      const postfix = getPostfixPrompt('znamkovac_graf_vysledku');
+      if (postfix === null) return;
+      a.download = `znamkovac_graf_vysledku${postfix}.png`; 
+      a.click();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  RESIZE
+    // ─────────────────────────────────────────────────────────────
+    window.addEventListener('resize', () => {
+      renderBar();
+      renderChart();
+    });
+
+    // ─────────────────────────────────────────────────────────────
+    //  BOOT
+    // ─────────────────────────────────────────────────────────────
+    init();
+  </script>
+</body>
+
+</html>
