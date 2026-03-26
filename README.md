@@ -1,82 +1,79 @@
-(English version below)
-# Známkovač (Grading App)
+# 📝 Známkovač / Grader App
 
-Samostatná, přenositelná HTML aplikace pro učitele na nastavení vizuální hodnotící škály a analýzu výsledků formou histogramu a základní statistiky (medián, průměr, modus). Aplikace běží kompletně lokálně v prohlížeči, nepotřebuje připojení k internetu, server ani instalaci. Vše probíhá bezpečně u vás na počítači.
+[![HTML5](https://img.shields.io/badge/HTML5-Offline-orange?style=flat-square&logo=html5)](https://en.wikipedia.org/wiki/HTML5)
+[![No Dependencies](https://img.shields.io/badge/Dependencies-None-success?style=flat-square)](#)
+[![Privacy](https://img.shields.io/badge/Privacy-100%25_Local-blue?style=flat-square)](#)
 
-## Hlavní funkce
+🌍 **[🇨🇿 Česky](#-česky)** | **[🇬🇧 English](#-english)**
 
-### 1. Vizuální škála hodnocení
+---
+
+## 🇨🇿 Česky
+
+**Známkovač** je offline HTML aplikace pro učitele. Umožňuje nastavit hodnotící škálu a analyzovat výsledky (histogram, statistiky). Běží bezpečně a lokálně přímo ve vašem prohlížeči, nepotřebuje připojení k internetu, server ani instalaci.
+
+### ✨ Hlavní funkce
+
+#### 1. Vizuální škála hodnocení
 - **Rychlé nastavení**: Výchozí škála odpovídá českému klasifikačnímu stupni 1–5, ale lze ji plně přizpůsobit.
 - **Táhla (Drag & Drop)**: Procentuální hranice každého stupně lze jednoduše posunovat vizuálně myší.
 - **Zámek poměrů**: Zapnutím funkce „Uzamknout posouvání hranic“ lze s jedním táhlem pohnout všemi ostatními hranicemi přesně v jejich aktuálním poměru.
 - **Pořadí řádků**: U každého stupně je vlevo ikona `⠿`, pomocí které lze stupeň přesunout nahoru/dolů (drag & drop), aniž by se rozbila procentuální posloupnost grafu.
-- **Výpočet bodů**: Zadáte-li "Maximální počet bodů", aplikace automaticky rozpočítá procentuální hranice do požadovaného bodového zisku (lze nastavit i přesnost na 0-3 desetinná místa).
+- **Výpočet bodů**: Zadáte-li "Maximální počet bodů", aplikace automaticky rozpočítá procentuální hranice do požadovaného bodového zisku (lze nastavit i přesnost na 0–3 desetinná místa).
 
-### 2. Analýza výsledků (Histogram)
+#### 2. Analýza výsledků (Histogram)
 - Pokaždé když v pravém panelu „Zadání studentů“ přidáte studentovi známku, překreslí se graf.
 - Graf vizualizuje rozložení známek celého ročníku/třídy a interpoluje jej proložením **křivkou normálního rozdělení**.
 - Na grafu je interaktivně vyznačen vzorec pro **medián**.
 - Můžete sledovat počty studentů, průměrnou známku a modus.
 
-### 3. Možnosti exportu
-Všechna data lze ukládat pro budoucí navrácení, nebo zobrazení:
+#### 3. Možnosti exportu
+Všechna data lze ukládat pro budoucí navrácení nebo zobrazení:
+- **Obyčejná škála (méně dat)**: Tlačítko *Uložit* pod definicemi řádků uloží pouze vaši vlastní vytvořenou tabulku (názvy úseků, barvy a minima).
+- **Kompletní výsledky (plná data)**: Tlačítko *Uložit do CSV* uloží nejen škálu, ale i kompletní počty studentů a bodové maximum.
+- **Čitelný formát CSV**: Ukládá výstupní data ve snadno pochopitelném CSV a rovnou do něj zapisuje textový rozptyl s bodovým ziskem (např. *54-60b*), abyste si export mohli snadno prohlédnout v Excelu.
 
-- **Obyčejná škála (méně dat)**: Spodní tlačítko *Uložit* pod definicemi řádků uloží pouze vaši vlastní vytvořenou tabulku (názvy úseků, barvy a jejich minimální procenta).
-- **Kompletní výsledky (plná data)**: Tlačítko *Uložit do CSV* uloží nejen škálu, ale i kompletní počty studentů v každé známce a bodové maximum.
-- **Čitelný formát CSV**: Systém ukládá výstupní data ve snadno pochopitelném CSV a rovnou do něj zapisuje maximální procentuální limit pro daný řádek i přesný textový rozptyl s bodovým ziskem (např. *54-60b*) tak, abyste si exportní soubor mohli snadno prohlédnout v Excelu bez spuštění aplikace.
+> 💡 *Tip: Při kliknutí na export se prohlížeč dotáže, zda si přejete do názvu souboru vložit vlastní příponu (např. jméno třídy).*
 
-*Tip: Při kliknutí na jakýkoli export se vás prohlížeč dotáže, zdali si nepřejete do názvu generovaného souboru vložit vlastní příponu (např. jméno třídy).*
-
-## Spuštění
-
-1. Otevřete jednoduše soubor `znamkovac.html` ve svém oblíbeném webovém prohlížeči (Chrome, Firefox, Edge, Safari...).
+### 🚀 Spuštění
+1. Otevřete soubor `znamkovac.html` ve svém oblíbeném webovém prohlížeči (Chrome, Firefox, Edge, Safari...).
 2. Hotovo.
 
-## Učitelům
-Aplikaci můžete snadno sdílet s kolegy skrze USB klíčenku, e-mail či síťový disk jednoduše nakopírováním `znamkovac.html` – nepotřebujete administrátorská práva pro její chod, obchází firewally a neposílá data pryč. Všechna vámi zapsaná citlivá data studentů se drží striktně v lokální paměti prohlížeče.
+### 🛡️ Bezpečnost a sdílení (Pro učitele)
+Aplikaci můžete snadno sdílet s kolegy (USB klíčenka, e-mail, síťový disk) jednoduše zkopírováním souboru `znamkovac.html`. Nepotřebujete administrátorská práva, aplikace obchází firewally a neposílá data pryč. Všechna citlivá data studentů zůstávají **striktně v lokální paměti prohlížeče**.
 
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---
 
+## 🇬🇧 English
 
-**Grader (Grading App)**
-A standalone, portable HTML application for teachers to set up a visual grading scale and analyze results via a histogram and basic statistics (median, mean, mode). The application runs completely locally in the browser—it does not need an internet connection, server, or installation. Everything happens securely on your own computer.
+**Grader** is an offline HTML app for teachers to set grading scales and analyze results (histograms, stats). It runs securely and locally right in your browser—no internet connection, server, or installation required.
 
-**Main Features**
-1. Visual Grading Scale
-Quick Setup: The default scale is set up for standard grading (A–F), but it can be fully customized.
+### ✨ Main Features
 
-Drag & Drop Handles: The percentage boundaries for each grade can be easily adjusted by dragging them with your mouse.
+#### 1. Visual Grading Scale
+- **Quick Setup**: The default scale is set up for standard grading (A–F), but it can be fully customized.
+- **Drag & Drop Handles**: Percentage boundaries for each grade can be easily adjusted by dragging them with your mouse.
+- **Ratio Lock**: By toggling "Lock boundary movement," moving one slider will proportionally adjust all other boundaries, maintaining their exact current ratios.
+- **Row Reordering**: Each grade row has a `⠿` icon on the left. You can drag and drop it to move the grade up or down without breaking the percentage sequence of the chart.
+- **Points Calculation**: If you enter "Max Points", the application automatically calculates the specific point thresholds (precision 0–3 decimal places).
 
-Ratio Lock: By toggling "Lock boundary movement," moving one slider will proportionally adjust all other boundaries, maintaining their exact current ratios.
+#### 2. Results Analysis (Histogram)
+- Every time you add a student's grade in the right-hand "Student Input" panel, the chart redraws itself.
+- The chart visualizes the grade distribution of the entire class and interpolates it by overlaying a **normal distribution curve**.
+- The **median** is interactively highlighted on the chart.
+- Track the total number of students, the mean (average), and the mode.
 
-Row Reordering: Each grade row has a ⠿ icon on the left. You can drag and drop it to move the grade up or down without breaking the percentage sequence of the chart.
-
-Points Calculation: If you enter the "Max Points", the application automatically calculates the specific point thresholds for your percentage boundaries (you can also set the precision to 0–3 decimal places).
-
-2. Results Analysis (Histogram)
-Every time you add a student's grade in the right-hand "Student Input" panel, the chart redraws itself.
-
-The chart visualizes the grade distribution of the entire class and interpolates it by overlaying a normal distribution curve.
-
-The median is interactively highlighted on the chart.
-
-You can track the total number of students, the mean (average), and the mode.
-
-3. Export Options
+#### 3. Export Options
 All data can be saved for future use or viewing:
+- **Basic Scale (Fewer Data)**: The *Save* button saves only your custom scale (grade names, colors, minimum percentages).
+- **Complete Results (Full Data)**: The *Save to CSV* button saves the scale, complete count of students for each grade, and maximum points.
+- **Readable CSV Format**: Saves output data in an easily digestible CSV format. It automatically writes out exact point ranges (e.g., *54-60b*) for clean viewing in Excel without opening the app.
 
-Basic Scale (Fewer Data): The Save button under the grade definitions saves only your custom scale (grade names, colors, and minimum percentages).
+> 💡 *Tip: When you click any export button, the browser will prompt you to optionally add a custom suffix to the generated filename (e.g., the name of the class).*
 
-Complete Results (Full Data): The Save to CSV button saves both the scale and the complete count of students for each grade, alongside the maximum points.
+### 🚀 How to Run
+1. Simply open the `grader.html` file in your favorite web browser (Chrome, Firefox, Edge, Safari...).
+2. You're done.
 
-Readable CSV Format: The system saves the output data in an easily digestible CSV format. It automatically writes out the exact point ranges (e.g., 54-60b), meaning you can cleanly view the export in Excel without even opening the app.
-
-Tip: When you click any export button, the browser will prompt you to optionally add a custom suffix to the generated filename (e.g., the name of the class).
-
-**How to Run**
-Simply open the grader.html file in your favorite web browser (Chrome, Firefox, Edge, Safari...).
-
-You're done.
-
-For Teachers
-You can easily share this application with colleagues via a USB drive, email, or a shared network drive simply by copying the grader.html file. You don't need administrator rights to run it, it bypasses firewalls, and it doesn't send data anywhere. All the sensitive student data you input is kept strictly in your browser's local memory.
+### 🛡️ Security & Sharing (For Teachers)
+Easily share this application with colleagues via a USB drive, email, or a shared network drive simply by copying the `grader.html` file. You don't need administrator rights to run it, it bypasses firewalls, and it doesn't send data anywhere. All sensitive student data input is kept **strictly in your browser's local memory**.
